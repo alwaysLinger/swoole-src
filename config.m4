@@ -1312,6 +1312,8 @@ EOF
     AC_MSG_CHECKING([for sources])
     if test -f "$abs_srcdir/ext-src/php_swoole.cc"; then
         swoole_source_dir=$abs_srcdir
+    elif test -f "$abs_srcdir/ext/swoole/ext-src/php_swoole.cc"; then
+        swoole_source_dir="$abs_srcdir/ext/swoole"
     elif test -f "ext-src/php_swoole.cc"; then
         swoole_source_dir=$(pwd)
     else
@@ -1319,8 +1321,16 @@ EOF
     fi
     AC_MSG_RESULT([$swoole_source_dir])
 
-    ext_src_files=$(cd $swoole_source_dir && find ext-src/ -name *.cc)
-    lib_src_files=$(cd $swoole_source_dir && find src/ -name *.cc)
+    if test ! -f "$swoole_source_dir/ext-src/php_swoole.cc"; then
+        AC_MSG_ERROR([swoole: cannot locate extension entry source under $swoole_source_dir])
+    fi
+    ext_src_files=$(cd "$swoole_source_dir" && find ext-src/ -name "*.cc") ||
+        AC_MSG_ERROR([swoole: cannot enumerate extension sources under $swoole_source_dir])
+    lib_src_files=$(cd "$swoole_source_dir" && find src/ -name "*.cc") ||
+        AC_MSG_ERROR([swoole: cannot enumerate core sources under $swoole_source_dir])
+    if test -z "$ext_src_files" || test -z "$lib_src_files"; then
+        AC_MSG_ERROR([swoole: extension and core source lists must not be empty under $swoole_source_dir])
+    fi
 
     swoole_source_file="${ext_src_files} ${lib_src_files}"
 
